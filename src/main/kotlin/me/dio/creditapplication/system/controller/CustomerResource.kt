@@ -1,6 +1,7 @@
 package me.dio.creditapplication.system.controller
 
 import me.dio.creditapplication.system.dto.CustomerDto
+import me.dio.creditapplication.system.dto.CustomerUpdateDto
 import me.dio.creditapplication.system.dto.CustomerView
 import me.dio.creditapplication.system.entity.Customer
 import me.dio.creditapplication.system.service.impl.CustomerService
@@ -25,4 +26,13 @@ class CustomerResource(
 
     @DeleteMapping("/{id}")
     fun deleteCustomer(@PathVariable id: Long) = this.customerService.delete(id)
+
+    @PatchMapping
+    fun upadateCustomer(@RequestParam(value = "customerId") id: Long,
+                        @RequestBody customerUpdateDto: CustomerUpdateDto): CustomerView {
+        val customer: Customer = this.customerService.findById(id)
+        val cutomerToUpdate: Customer = customerUpdateDto.toEntity(customer)
+        val customerUpdated: Customer = this.customerService.save(cutomerToUpdate)
+        return CustomerView(customerUpdated)
+    }
 }
