@@ -2,6 +2,7 @@ package me.dio.creditapplication.system.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import me.dio.creditapplication.system.dto.request.CustomerDto
+import me.dio.creditapplication.system.entity.Customer
 import me.dio.creditapplication.system.repository.CustomerRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -103,6 +104,46 @@ class CustomerResourceTest {
                 .andExpect(
                         MockMvcResultMatchers.jsonPath("$.exception")
                                 .value("class org.springframework.web.bind.MethodArgumentNotValidException")
+                )
+                .andExpect(MockMvcResultMatchers.jsonPath("$.details[*]").isNotEmpty)
+                .andDo(MockMvcResultHandlers.print())
+    }
+
+    @Test
+    fun `should find customer by id and return 200 status`() {
+        //given
+        val customer: Customer = customerRepository.save(builderCustomerDto().toEntity())
+        //when
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get("$URL/${customer.id}")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.jsonPath("$.firstName").value("Daiane"))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.lastName").value("Silveira"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.cpf").value("28475934625"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("daiane@email.com"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.zipCode").value("000000"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.street").value("Rua da Daiane, 123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+                .andDo(MockMvcResultHandlers.print())
+    }
+
+    @Test
+    fun `should not find customer with invalid id and return 400 status`() {
+        //given
+        val invalidId: Long = 2L
+        //when
+        //then
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("$URL/$invalidId")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Bad Request! Consult the documentation"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.timestamp").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(400))
+                .andExpect(
+                        MockMvcResultMatchers.jsonPath("$.exception")
+                                .value("class me.dio.creditapplication.system.exception.BusinessException")
                 )
                 .andExpect(MockMvcResultMatchers.jsonPath("$.details[*]").isNotEmpty)
                 .andDo(MockMvcResultHandlers.print())
