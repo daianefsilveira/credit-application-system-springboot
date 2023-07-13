@@ -2,6 +2,7 @@ package me.dio.creditapplication.system.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import me.dio.creditapplication.system.dto.request.CustomerDto
+import me.dio.creditapplication.system.dto.request.CustomerUpdateDto
 import me.dio.creditapplication.system.entity.Customer
 import me.dio.creditapplication.system.repository.CustomerRepository
 import org.junit.jupiter.api.AfterEach
@@ -59,6 +60,7 @@ class CustomerResourceTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.lastName").value("Silveira"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cpf").value("28475934625"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("daiane@email.com"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.income").value("1000.0"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.zipCode").value("000000"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.street").value("Rua da Daiane, 123"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
@@ -123,6 +125,7 @@ class CustomerResourceTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.lastName").value("Silveira"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cpf").value("28475934625"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("daiane@email.com"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.income").value("1000.0"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.zipCode").value("000000"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.street").value("Rua da Daiane, 123"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
@@ -186,6 +189,56 @@ class CustomerResourceTest {
                 .andDo(MockMvcResultHandlers.print())
     }
 
+    @Test
+    fun `should update a customer and return 200 status`() {
+        //given
+        val customer: Customer = customerRepository.save(builderCustomerDto().toEntity())
+        val customerUpdateDto: CustomerUpdateDto = builderCustomerUpdateDto()
+        val valueAsString: String = objectMapper.writeValueAsString(customerUpdateDto)
+        //when
+        //then
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch("$URL?customerId=${customer.id}")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(valueAsString)
+        )
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.jsonPath("$.firstName").value("DaianeUpdate"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.lastName").value("SilveiraUpdate"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.cpf").value("28475934625"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("daiane@email.com"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.income").value("5000.0"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.zipCode").value("45656"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.street").value("Rua Updated"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+                .andDo(MockMvcResultHandlers.print())
+    }
+
+    @Test
+    fun `should not update a customer with invalid id and return 400 status`() {
+        //given
+        val invalidId: Long = Random().nextLong()
+        val customerUpdateDto: CustomerUpdateDto = builderCustomerUpdateDto()
+        val valueAsString: String = objectMapper.writeValueAsString(customerUpdateDto)
+        //when
+        //then
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch("$URL?customerId=$invalidId")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(valueAsString)
+        )
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Bad Request! Consult the documentation"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.timestamp").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(400))
+                .andExpect(
+                        MockMvcResultMatchers.jsonPath("$.exception")
+                                .value("class me.dio.creditapplication.system.exception.BusinessException")
+                )
+                .andExpect(MockMvcResultMatchers.jsonPath("$.details[*]").isNotEmpty)
+                .andDo(MockMvcResultHandlers.print())
+    }
+
     private fun builderCustomerDto(
             firstName: String = "Daiane",
             lastName: String = "Silveira",
@@ -202,6 +255,20 @@ class CustomerResourceTest {
             email = email,
             income = income,
             password = password,
+            zipCode = zipCode,
+            street = street
+    )
+
+    private fun builderCustomerUpdateDto(
+            firstName: String = "DaianeUpdate",
+            lastName: String = "SilveiraUpdate",
+            income: BigDecimal = BigDecimal.valueOf(5000.0),
+            zipCode: String = "45656",
+            street: String = "Rua Updated"
+    ): CustomerUpdateDto = CustomerUpdateDto(
+            firstName = firstName,
+            lastName = lastName,
+            income = income,
             zipCode = zipCode,
             street = street
     )
