@@ -84,7 +84,7 @@ class CustomerServiceTest {
     }
 
     companion object {
-        private fun buildCustomer(
+        fun buildCustomer(
                 firstName: String = "Daiane",
                 lastName: String = "Silveira",
                 cpf: String = "28475934625",
